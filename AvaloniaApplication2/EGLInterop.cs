@@ -23,16 +23,72 @@ namespace AvaloniaApplication2
 
         private delegate bool GetDeviceDelegate(IntPtr displayHandle, int type, out IntPtr ptr);
 
-        private Device _device;
+        private delegate void GetTexturesDelegate(uint size, out uint texture);
         
+        private delegate void BindTextureDelegate(int type, uint texture);
+        
+        private delegate bool BindTexImageDelegate(IntPtr display, IntPtr surface, int type);
+
+        private delegate void GlTexParameteri(int target, int pname, int param);
+        
+        private Device _device;
+        private EglContext _eglContext;
+
         public EGLInterop()
         {
             var glFeature = AvaloniaLocator.Current.GetService<IWindowingPlatformGlFeature>();
-            var eglContext = glFeature.ImmediateContext as EglContext;
+            _eglContext = glFeature.ImmediateContext as EglContext;
 
-            var pointer = GetEglD3Device(eglContext);
+            var pointer = GetEglD3Device(_eglContext);
             
             _device = new Device(pointer);
+        }
+        
+        public uint BindTexture(IntPtr eglSurface)
+        {
+            var error = 0;
+            
+            var getTexturesHandle =
+                _eglContext.Display.GlInterface.GetProcAddress("glGenTextures");
+            var getTextures =
+                (GetTexturesDelegate) Marshal.GetDelegateForFunctionPointer(getTexturesHandle,
+                    typeof(GetTexturesDelegate));
+            
+            getTextures(1, out var textures);
+            error = _eglContext.Display.GlInterface.GetError();
+
+            
+            var bindTextureHandle =
+                _eglContext.Display.GlInterface.GetProcAddress("glBindTexture");
+            var bindTexture =
+                (BindTextureDelegate) Marshal.GetDelegateForFunctionPointer(bindTextureHandle,
+                    typeof(BindTextureDelegate));
+
+            bindTexture(GlConsts.GL_TEXTURE_2D , textures);
+            error = _eglContext.Display.GlInterface.GetError();
+            
+            
+            var bindTexImageHandle =
+                _eglContext.Display.GlInterface.GetProcAddress("eglBindTexImage");
+            var bindTexImage =
+                (BindTexImageDelegate) Marshal.GetDelegateForFunctionPointer(bindTexImageHandle,
+                    typeof(BindTexImageDelegate));
+
+            var bindResult = bindTexImage((_eglContext.Display as EglDisplay).Handle, eglSurface, EglConsts.EGL_BACK_BUFFER);
+            
+            
+            var glTexParameteriHandle = _eglContext.Display.GlInterface.GetProcAddress("glTexParameteri");
+            var glParameteri =
+                (GlTexParameteri) Marshal.GetDelegateForFunctionPointer(glTexParameteriHandle,
+                    typeof(GlTexParameteri));
+
+            glParameteri(GlConsts.GL_TEXTURE_2D, GlConsts.GL_TEXTURE_MIN_FILTER, GlConsts.GL_NEAREST);
+            error = _eglContext.Display.GlInterface.GetError();
+
+            glParameteri(GlConsts.GL_TEXTURE_2D, GlConsts.GL_TEXTURE_MAG_FILTER, GlConsts.GL_NEAREST);
+            error = _eglContext.Display.GlInterface.GetError();
+            
+            return textures;
         }
         
         public IntPtr CreateEglSurface()
@@ -51,7 +107,6 @@ namespace AvaloniaApplication2
             // create egl surface handle
             var eglSurface = CreateEglSurface(eglContext, displayHandle, textureSharedHandle, configHandle);
 
-
             return eglSurface;
         }
         
@@ -65,8 +120,11 @@ namespace AvaloniaApplication2
             // create attributes
             var pBufferAttributes = new[]
             {
-                EglConsts.EGL_TEXTURE_FORMAT, EglConsts.EGL_NO_TEXTURE,
-                EglConsts.EGL_TEXTURE_TARGET, EglConsts.EGL_NONE
+                EglConsts.EGL_WIDTH, 800,
+                EglConsts.EGL_HEIGHT, 600,
+                EglConsts.EGL_TEXTURE_TARGET, EglConsts.EGL_TEXTURE_2D,
+                EglConsts.EGL_TEXTURE_FORMAT, EglConsts.EGL_TEXTURE_RGBA,
+                EglConsts.EGL_NONE
             };
 
 
@@ -77,7 +135,7 @@ namespace AvaloniaApplication2
 
             // create and return egl surface            
             var eglSurfaceHandle =
-                createEGLSurface(displayHandle, 0x33A3, sharedHandle, configHandle, null);
+                createEGLSurface(displayHandle, 0x33A3, sharedHandle, configHandle, pBufferAttributes);
 
             return eglSurfaceHandle;
         }
@@ -127,6 +185,9 @@ namespace AvaloniaApplication2
                 OptionFlags = ResourceOptionFlags.Shared,
                 SampleDescription = new SampleDescription(1, 0)
             });
+            
+            _renderTargetView = new RenderTargetView(sharpDxD3dDevice, texture);
+            sharpDxD3dDevice.ImmediateContext.ClearRenderTargetView(_renderTargetView, new RawColor4(0, 0, 0, 1));
             
             return texture.NativePointer;
         }

@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
+using Avalonia.OpenGL;
 using Avalonia.Platform;
 using Avalonia.Rendering.SceneGraph;
 using Avalonia.Skia;
@@ -52,26 +53,28 @@ namespace AvaloniaApplication2
             public void Render(IDrawingContextImpl context)
             {
                 var eglSurface = _eglInterop.CreateEglSurface();
+
+                var textureHandle = _eglInterop.BindTexture(eglSurface);
+                
                 var grContext = (context as ISkiaDrawingContextImpl).GrContext;
 
                 var desc = new GRBackendTextureDesc
                 {
-                    TextureHandle = eglSurface,
+                    TextureHandle = new IntPtr(textureHandle),
                     Config = GRPixelConfig.Rgba8888,
                     Height = 600,
                     Width = 800,
                     Origin = GRSurfaceOrigin.TopLeft
                 };
 
-                var target =
-                    new GRBackendRenderTarget(800, 800, 0, 0,
-                        new GRGlFramebufferInfo((uint)fb, GRPixelConfig.Rgba8888.ToGlSizedFormat()));
-                
-                using (var surface = SKSurface.Create(grContext, desc))
+                using (var texture = new GRBackendTexture(600, 800, false, new GRGlTextureInfo(GlConsts.GL_TEXTURE_2D, textureHandle, GlConsts.GL_RGBA8)))
                 {
-                    var canvas = (context as ISkiaDrawingContextImpl)?.SkCanvas;
+                    using (var surface = SKSurface.Create(grContext, texture, SKColorType.Rgba8888))
+                    {
+                        var canvas = (context as ISkiaDrawingContextImpl)?.SkCanvas;
 
-                    canvas.DrawSurface(surface, new SKPoint(10, 10));
+                        canvas.DrawSurface(surface, new SKPoint(10, 10));
+                    }
                 }
             }
         }
