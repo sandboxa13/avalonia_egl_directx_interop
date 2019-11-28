@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="C:\Users\mi\.Rider2019.2\system\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\mi\.Rider2019.2\system\resharper-host\local\Transient\ReSharperHost\v192\SolutionCaches\_AvaloniaApplication2.2132012481.00" t="ExcludeRecursive" />
+    <e p="C:\Users\mi\source\repos\AvaloniaApplication2" t="IncludeFlat">
+      <e p="AvaloniaApplication2" t="IncludeRecursive">
+        <e p="App.xaml" t="Include" />
+        <e p="App.xaml.cs" t="Include" />
+        <e p="AvaloniaApplication2.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="EGLInterop.cs" t="Include" />
+        <e p="MainWindow.xaml" t="Include" />
+        <e p="MainWindow.xaml.cs" t="Include" />
+        <e p="nuget.config" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net461" t="Include">
+              <e p="AvaloniaApplication2.AssemblyInfo.cs" t="Include" />
+            </e>
+            <e p="netcoreapp2.1" t="Include">
+              <e p="AvaloniaApplication2.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Program.cs" t="Include" />
+      </e>
+      <e p="AvaloniaApplication2.sln" t="IncludeFlat" />
+      <e p="packages" t="ExcludeRecursive" />
+    </e>
+  </component>
+</project>
